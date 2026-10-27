@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>스쿨데이</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  /* Layout: 공책 한 장 위에 탭으로 나뉜 도구들. 모눈 배경 + 연필 노랑 강조 */
+  :root {
+    --paper: #f7f6f1; --sheet: #fffefa; --ink: #22283a; --pencil: #6a6f80;
+    --rule: #dfe3ec; --grid: #e9ecf3; --blue: #2f55c8; --blue-soft: #e6ecfb;
+    --mark: #f5c83b; --mark-ink: #4a3a00; --red: #d2453f;
+    --f-display: "Black Han Sans", "Noto Sans KR", sans-serif;
+    --f-body: "Noto Sans KR", system-ui, sans-serif;
+    --f-hand: "Gowun Dodum", "Noto Sans KR", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171f; --sheet: #1b1f2a; --ink: #e8eaf2; --pencil: #9aa0b4;
+      --rule: #2c3242; --grid: #1f2430; --blue: #86a2ff; --blue-soft: #232c4a;
+      --mark: #f2c94c; --mark-ink: #2b2200; --red: #ff7a72; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14171f; --sheet: #1b1f2a; --ink: #e8eaf2; --pencil: #9aa0b4;
+    --rule: #2c3242; --grid: #1f2430; --blue: #86a2ff; --blue-soft: #232c4a;
+    --mark: #f2c94c; --mark-ink: #2b2200; --red: #ff7a72; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background-color: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding-block: 0 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+  /* 히어로: 해 질 녘 학교 건물 위에 슬로건. 테마와 상관없이 항상 밤 풍경 */
+  .hero { --night: #0e1830; --on-night: #ffffff; --on-night-soft: rgba(255,255,255,.8); --dot: rgba(255,255,255,.45); --dot-on: #3d6be0;
+    position: relative; height: clamp(320px, 48vw, 460px); overflow: hidden; background: var(--night); color: var(--on-night); }
+  .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; animation: drift 30s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: scale(1); } to { transform: scale(1.06) translateX(-1.5%); } }
+  .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(8,14,32,.45), rgba(8,14,32,.15) 45%, rgba(8,14,32,.6)); }
+  .hero-in { position: relative; z-index: 1; height: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column;
+    padding-block: 18px 26px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .hero-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .logo { font-family: var(--f-display); font-size: 1.4rem; letter-spacing: .01em; }
+  .logo em { font-style: normal; color: var(--mark); }
+  .hero-right { display: flex; align-items: center; gap: 14px; }
+  .date { font-family: var(--f-hand); color: var(--on-night-soft); font-size: .9rem; }
+  .dots { display: flex; gap: 4px; align-items: center; }
+  .dots button { width: 12px; height: 12px; border: 0; padding: 0; background: var(--dot); cursor: pointer; }
+  .dots button.on { background: var(--dot-on); }
+  .dots button.pause { width: 14px; background: none; color: var(--on-night); font: 700 10px/12px var(--f-body); }
+  .slogan { margin: auto 0; display: grid; justify-items: center; gap: 12px; text-align: center; transition: opacity .35s; }
+  .slogan.fade { opacity: 0; }
+  .eyebrow { display: flex; align-items: center; gap: 14px; font-weight: 400; letter-spacing: .04em; font-size: clamp(.85rem, 2.2vw, 1.1rem); }
+  .eyebrow::before, .eyebrow::after { content: ""; width: clamp(28px, 9vw, 96px); height: 1px; background: var(--on-night-soft); }
+  .hero h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(1.9rem, 5.8vw, 3.3rem); line-height: 1.2;
+    text-wrap: balance; text-shadow: 0 2px 18px rgba(0,0,0,.5); }
+  .hero .lead { margin: 0; color: var(--on-night-soft); max-width: 42ch; font-size: .95rem; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+  .intro { margin: 18px 0 4px; color: var(--pencil); max-width: 60ch; }
+
+  nav.tabs { display: flex; gap: 4px; overflow-x: auto; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+    background: var(--paper); padding-block: 8px; border-bottom: 2px solid var(--ink); margin-bottom: 18px; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+  nav.tabs button { flex: none; border: 0; background: none; color: var(--pencil); font: 500 .95rem var(--f-body);
+    padding: 8px 14px; border-radius: 8px 8px 0 0; cursor: pointer; }
+  nav.tabs button:hover { color: var(--ink); }
+  nav.tabs button[aria-selected="true"] { background: var(--ink); color: var(--sheet); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  .panel[hidden] { display: none; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 20px; min-width: 0; }
+  .sheet h2 { margin: 0 0 12px; font-size: .78rem; letter-spacing: .08em; color: var(--pencil); font-weight: 700; }
+  .big { font-family: var(--f-display); font-size: 2.4rem; line-height: 1.1; color: var(--blue); font-variant-numeric: tabular-nums; }
+  .sub { color: var(--pencil); font-size: .85rem; }
+  .ex { font-size: .7rem; font-weight: 700; color: var(--mark-ink); background: var(--mark); padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 2px; }
+
+  form.row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  form.row .grow { flex: 1 1 200px; }
+  input, select, textarea { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 9px 12px; min-width: 0; }
+  textarea { width: 100%; resize: vertical; }
+  .btn { border: 0; background: var(--blue); color: var(--sheet); font: 700 .95rem var(--f-body); padding: 9px 18px; border-radius: 6px; cursor: pointer; }
+  .btn.ghost { background: var(--blue-soft); color: var(--blue); }
+
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  ul.list > li { display: flex; align-items: center; gap: 14px; padding: 12px 2px; border-bottom: 1px solid var(--rule); }
+  ul.list > li:last-child { border-bottom: 0; }
+  .grow { flex: 1; min-width: 0; }
+  .dday { font-family: var(--f-display); min-width: 70px; text-align: center; padding: 3px 8px; border-radius: 4px;
+    background: var(--blue-soft); color: var(--blue); font-variant-numeric: tabular-nums; }
+  .dday.soon { background: var(--mark); color: var(--mark-ink); }
+  .dday.past { background: var(--grid); color: var(--pencil); }
+  .x { border: 0; background: none; color: var(--pencil); cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 4px; }
+  .x:hover { color: var(--red); }
+  .empty { color: var(--pencil); padding: 14px 0; font-family: var(--f-hand); }
+
+  .timer { display: grid; justify-items: center; gap: 10px; text-align: center; }
+  .modes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .modes button { border: 1px solid var(--rule); background: none; color: var(--pencil); font: inherit; font-size: .9rem; padding: 5px 12px; border-radius: 99px; cursor: pointer; }
+  .modes button.on { border-color: var(--blue); color: var(--blue); font-weight: 700; }
+  .clock { font-family: var(--f-display); font-size: clamp(3.4rem, 15vw, 5.5rem); line-height: 1; font-variant-numeric: tabular-nums; }
+  .bar { width: 100%; max-width: 420px; height: 6px; background: var(--grid); border-radius: 99px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--blue); transition: width .4s; }
+  .ctrl { display: flex; gap: 8px; }
+  .stats { display: flex; gap: 28px; margin-top: 8px; color: var(--pencil); font-size: .85rem; }
+  .stats b { display: block; color: var(--ink); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+  .toast { padding: 10px 14px; border-radius: 6px; background: var(--mark); color: var(--mark-ink); font-weight: 700; }
+
+  .tt-wrap { overflow-x: auto; }
+  table.tt { width: 100%; min-width: 520px; border-collapse: collapse; }
+  table.tt th { font-size: .82rem; color: var(--pencil); font-weight: 500; padding: 6px; }
+  table.tt th.now { color: var(--blue); font-weight: 700; }
+  table.tt td { padding: 3px; }
+  table.tt td input { width: 100%; text-align: center; padding: 8px 4px; }
+  table.tt td.now input { border-color: var(--blue); background: var(--blue-soft); }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips button { border: 1px solid var(--rule); background: none; color: var(--pencil); font: inherit; font-size: .85rem; padding: 3px 12px; border-radius: 99px; cursor: pointer; }
+  .chips button.on { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+  .stack { display: grid; gap: 8px; margin-bottom: 14px; }
+  .stack .row2 { display: flex; gap: 8px; justify-content: space-between; }
+  .tag { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--blue-soft); color: var(--blue); white-space: nowrap; }
+  li.note { flex-direction: column; align-items: stretch !important; gap: 4px !important; }
+  li.note .head { display: flex; align-items: center; gap: 8px; }
+  li.note.done { opacity: .5; }
+  li.note .q { font-weight: 500; white-space: pre-wrap; overflow-wrap: anywhere; }
+  li.note .a { font-family: var(--f-hand); color: var(--pencil); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .check { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--pencil); cursor: pointer; }
+  footer { color: var(--pencil); font-size: .82rem; text-align: center; margin-top: 32px; }
+  @media (prefers-reduced-motion: reduce) { .bar i, .slogan { transition: none; } .hero canvas { animation: none; } }
+</style>
+
+</head>
+<body>
+<header class="hero">
+  <canvas id="hero-cv" aria-hidden="true"></canvas>
+  <div class="hero-in">
+    <div class="hero-top">
+      <div class="logo">스쿨<em>데이</em></div>
+      <div class="hero-right">
+        <div class="date" id="today"></div>
+        <div class="dots" id="dots"></div>
+      </div>
+    </div>
+    <div class="slogan" id="slogan" aria-live="polite">
+      <div class="eyebrow" id="s-eyebrow">Opening A Brighter School Day</div>
+      <h1 id="s-title">오늘의 한 걸음이 내일의 실력이 됩니다</h1>
+      <p class="lead" id="s-lead">시험 일정부터 공부 시간, 오답까지 한곳에서</p>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <p class="intro">시험 D-Day, 공부 타이머, 시간표, 오답 노트를 한곳에서 관리해요. 입력한 내용은 이 기기 브라우저에만 저장돼요.</p>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-home" data-tab="home" aria-selected="true">한눈에</button>
+    <button role="tab" id="tab-dday" data-tab="dday" aria-selected="false">D-Day</button>
+    <button role="tab" id="tab-timer" data-tab="timer" aria-selected="false">공부 타이머</button>
+    <button role="tab" id="tab-tt" data-tab="tt" aria-selected="false">시간표</button>
+    <button role="tab" id="tab-notes" data-tab="notes" aria-selected="false">오답 노트</button>
+  </nav>
+
+  <section class="panel" id="p-home">
+    <div class="grid">
+      <div class="sheet"><h2>다가오는 일정</h2><div id="ov-dday"></div></div>
+      <div class="sheet"><h2>오늘 공부한 시간</h2><div class="big" id="ov-study">0분</div><div class="sub" id="ov-sessions">완료한 집중 세션 0회</div></div>
+      <div class="sheet"><h2>오늘 시간표</h2><div id="ov-tt"></div></div>
+      <div class="sheet"><h2>복습할 오답</h2><div class="big" id="ov-notes">0개</div><div class="sub">아직 해결하지 않은 문제</div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-dday" hidden>
+    <div class="sheet">
+      <h2>시험 · 수행평가 D-Day</h2>
+      <form class="row" id="dday-form">
+        <input id="dday-title" class="grow" placeholder="예: 2학기 기말고사" required maxlength="40" aria-label="일정 이름">
+        <input id="dday-date" type="date" required aria-label="날짜">
+        <button class="btn">추가</button>
+      </form>
+      <ul class="list" id="dday-list"></ul>
+    </div>
+  </section>
+
+  <section class="panel" id="p-timer" hidden>
+    <div class="sheet timer">
+      <div class="modes" id="modes">
+        <button data-min="25" class="on">집중 25분</button>
+        <button data-min="50">집중 50분</button>
+        <button data-min="5" data-break="1">휴식 5분</button>
+        <button data-min="10" data-break="1">휴식 10분</button>
+      </div>
+      <div class="clock" id="clock">25:00</div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="ctrl"><button class="btn" id="t-start">시작</button><button class="btn ghost" id="t-reset">초기화</button></div>
+      <div class="toast" id="toast" hidden></div>
+      <div class="stats">
+        <div><b id="st-today">0분</b>오늘</div>
+        <div><b id="st-sess">0회</b>세션</div>
+        <div><b id="st-week">0분</b>최근 7일</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-tt" hidden>
+    <div class="sheet">
+      <h2>우리 반 시간표 · 칸을 눌러 과목을 입력하세요</h2>
+      <div class="tt-wrap"><table class="tt" id="tt"></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-notes" hidden>
+    <div class="sheet">
+      <h2>오답 노트</h2>
+      <form class="stack" id="note-form">
+        <textarea id="note-q" rows="2" placeholder="틀린 문제 또는 헷갈린 개념" required maxlength="500"></textarea>
+        <textarea id="note-a" rows="2" placeholder="정답과 내가 틀린 이유 (선택)" maxlength="500"></textarea>
+        <div class="row2"><select id="note-subj" aria-label="과목"></select><button class="btn">저장</button></div>
+      </form>
+      <div class="chips" id="note-filter"></div>
+      <ul class="list" id="note-list"></ul>
+    </div>
+  </section>
+
+  <footer>스쿨데이 · 모든 기록은 이 브라우저에만 저장돼요. 노란 '예시' 표시는 지우고 내 일정으로 채워 보세요.</footer>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const store = {
+    has(k) { try { return localStorage.getItem('sd_' + k) !== null; } catch { return false; } },
+    get(k, d) { try { const v = localStorage.getItem('sd_' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('sd_' + k, JSON.stringify(v)); } catch {} }
+  };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const plus = n => ymd(new Date(Date.now() + n * 864e5));
+  const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+  const SUBJECTS = ['국어', '수학', '영어', '과학', '사회', '역사', '기타'];
+  const exTag = o => o.ex ? '<span class="ex">예시</span>' : '';
+
+  const now = new Date();
+  $('#today').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 ${DAYS[now.getDay()]}요일`;
+
+  // 히어로 배경: 해 질 녘 불 켜진 학교 건물 (매번 같은 모습이 되도록 고정 시드)
+  function drawHero() {
+    const c = $('#hero-cv'), r = c.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (!r.width) return;
+    c.width = r.width * dpr; c.height = r.height * dpr;
+    const x = c.getContext('2d'); x.scale(dpr, dpr);
+    const W = r.width, H = r.height, ground = H * .88;
+    let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+    const sky = x.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#0d1a3a'); sky.addColorStop(.55, '#2b4778'); sky.addColorStop(1, '#7a90b8');
+    x.fillStyle = sky; x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(255,255,255,.55)';
+    for (let i = 0; i < 70; i++) x.fillRect(rnd() * W, rnd() * H * .35, 1, 1);
+
+    // 멀리 보이는 도시
+    for (let px = 0; px < W;) {
+      const bw = 18 + rnd() * 46, bh = 18 + rnd() * H * .16;
+      x.fillStyle = '#1a2645'; x.fillRect(px, ground - bh, bw, bh + 4);
+      x.fillStyle = 'rgba(255,214,140,.55)';
+      for (let k = 0; k < bh / 9; k++) if (rnd() < .35) x.fillRect(px + 3 + rnd() * (bw - 6), ground - bh + 4 + k * 8, 2, 2);
+      px += bw + 2;
+    }
+
+    // 본관 건물: 높은 동 + 낮은 동
+    const bW = Math.min(W * .62, 700), bx = W * .08;
+    const blocks = [{ x: 0, w: .58, top: H * .1 }, { x: .58, w: .42, top: H * .26 }];
+    blocks.forEach(b => {
+      const left = bx + b.x * bW, w = b.w * bW, top = b.top;
+      const brick = x.createLinearGradient(0, top, 0, ground);
+      brick.addColorStop(0, '#7a4232'); brick.addColorStop(1, '#4a271e');
+      x.fillStyle = brick; x.fillRect(left, top, w, ground - top);
+      x.fillStyle = '#a2604a'; x.fillRect(left - 4, top - 6, w + 8, 8);
+      const colW = 24, rowH = 28, cols = Math.floor((w - 16) / colW), rows = Math.floor((ground - top - 24) / rowH);
+      const ox = left + (w - cols * colW) / 2 + 5;
+      for (let cI = 0; cI < cols; cI++) {
+        if (cI % 5 === 4) { x.fillStyle = 'rgba(214,206,192,.28)'; x.fillRect(ox + cI * colW - 3, top + 8, colW - 2, ground - top - 8); continue; }
+        for (let rI = 0; rI < rows; rI++) {
+          const wx = ox + cI * colW, wy = top + 18 + rI * rowH;
+          if (rnd() < .72) {
+            x.shadowColor = 'rgba(255,200,110,.9)'; x.shadowBlur = 8;
+            x.fillStyle = rnd() < .8 ? '#ffd88c' : '#fff1c9';
+          } else { x.shadowBlur = 0; x.fillStyle = '#2a1b17'; }
+          x.fillRect(wx, wy, 14, 17);
+        }
+      }
+      x.shadowBlur = 0;
+    });
+
+    // 앞쪽 나무
+    x.fillStyle = '#0b1611';
+    for (let tx = -10; tx < W + 20; tx += 16 + rnd() * 10) {
+      const ty = H - 6 - rnd() * H * .1;
+      x.beginPath(); x.arc(tx, ty, 12 + rnd() * 22, 0, Math.PI * 2); x.fill();
+    }
+    x.fillRect(0, H - 14, W, 14);
+  }
+  drawHero();
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(drawHero, 150); });
+
+  // 슬로건 슬라이드
+  const SLIDES = [
+    { e: 'Opening A Brighter School Day', t: '오늘의 한 걸음이 내일의 실력이 됩니다', l: '시험 일정부터 공부 시간, 오답까지 한곳에서', tab: 'home' },
+    { e: 'Count Down To Your Goal', t: '시험까지 남은 날, 한눈에 확인하세요', l: 'D-Day를 등록하면 7일 앞으로 다가온 일정을 노랗게 알려 줘요', tab: 'dday' },
+    { e: 'Focus For Twenty-Five Minutes', t: '집중 25분, 휴식 5분의 리듬', l: '뽀모도로 타이머로 오늘 공부한 시간을 쌓아 보세요', tab: 'timer' },
+    { e: 'Learn From Every Mistake', t: '틀린 문제는 다시 틀리지 않도록', l: '과목별 오답 노트로 헷갈린 개념을 정리해요', tab: 'notes' }
+  ];
+  let si = 0, playing = true, slideT;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('#dots').innerHTML = SLIDES.map((s, i) => `<button data-i="${i}" aria-label="${i + 1}번째 슬로건"></button>`).join('') +
+    '<button class="pause" id="pause" aria-label="슬라이드 멈춤">II</button>';
+  function setSlide(i) {
+    si = (i + SLIDES.length) % SLIDES.length;
+    const s = SLIDES[si], box = $('#slogan');
+    document.querySelectorAll('#dots button[data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === si));
+    const swap = () => { $('#s-eyebrow').textContent = s.e; $('#s-title').textContent = s.t; $('#s-lead').textContent = s.l; box.classList.remove('fade'); };
+    if (reduce) swap(); else { box.classList.add('fade'); setTimeout(swap, 350); }
+  }
+  function play() { clearInterval(slideT); if (playing) slideT = setInterval(() => setSlide(si + 1), 6000); }
+  $('#dots').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'pause') {
+      playing = !playing; b.textContent = playing ? 'II' : '▶';
+      b.setAttribute('aria-label', playing ? '슬라이드 멈춤' : '슬라이드 재생');
+    } else setSlide(+b.dataset.i);
+    play();
+  });
+  setSlide(0); if (reduce) playing = false; play();
+
+  // 처음 방문하면 예시 데이터로 채워서 보여 주기
+  let ddays = store.has('ddays') ? store.get('ddays', []) : [
+    { id: 1, title: '2학기 기말고사', date: plus(24), ex: true },
+    { id: 2, title: '영어 수행평가 (말하기)', date: plus(5), ex: true },
+    { id: 3, title: '과학 탐구 보고서 제출', date: plus(11), ex: true }
+  ];
+  let notes = store.has('notes') ? store.get('notes', []) : [
+    { id: 1, subj: '수학', q: '이차방정식 x² - 5x + 6 = 0 의 두 근의 합', a: '근과 계수의 관계: 합 = -b/a = 5. 곱(6)과 헷갈렸음', date: ymd(now).replace(/-/g, '.'), done: false, ex: true },
+    { id: 2, subj: '영어', q: 'affect / effect 구분', a: 'affect는 동사(영향을 주다), effect는 주로 명사(효과)', date: ymd(now).replace(/-/g, '.'), done: false, ex: true }
+  ];
+  let tt = store.get('timetable', {});
+  let log = store.get('studylog', {});
+
+  // 탭 (#dday 같은 주소로 바로 열 수 있음)
+  const tabs = document.querySelectorAll('nav.tabs button');
+  function showTab(name) {
+    tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+    document.querySelectorAll('.panel').forEach(p => { p.hidden = p.id !== 'p-' + name; });
+    if (name === 'home') renderOverview();
+  }
+  tabs.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  // D-Day
+  const dayDiff = date => Math.round((new Date(date + 'T00:00') - new Date(ymd(new Date()) + 'T00:00')) / 864e5);
+  const ddLabel = n => n === 0 ? 'D-DAY' : n > 0 ? `D-${n}` : `D+${-n}`;
+  const ddClass = n => n < 0 ? 'past' : n <= 7 ? 'soon' : '';
+  function renderDday() {
+    ddays.sort((a, b) => a.date.localeCompare(b.date));
+    const items = [...ddays.filter(d => dayDiff(d.date) >= 0), ...ddays.filter(d => dayDiff(d.date) < 0)];
+    $('#dday-list').innerHTML = items.length ? items.map(d => {
+      const n = dayDiff(d.date);
+      return `<li><span class="dday ${ddClass(n)}">${ddLabel(n)}</span>
+        <div class="grow"><div>${esc(d.title)}${exTag(d)}</div><div class="sub">${d.date.replace(/-/g, '.')}</div></div>
+        <button class="x" data-id="${d.id}" aria-label="${esc(d.title)} 삭제">✕</button></li>`;
+    }).join('') : '<li class="empty">아직 일정이 없어요. 다가오는 시험을 추가해 보세요.</li>';
+  }
+  $('#dday-date').value = plus(14);
+  $('#dday-form').addEventListener('submit', e => {
+    e.preventDefault();
+    ddays.push({ id: Date.now(), title: $('#dday-title').value.trim(), date: $('#dday-date').value });
+    store.set('ddays', ddays); $('#dday-title').value = ''; renderDday();
+  });
+  $('#dday-list').addEventListener('click', e => {
+    const id = e.target.dataset.id; if (!id) return;
+    ddays = ddays.filter(d => String(d.id) !== id); store.set('ddays', ddays); renderDday();
+  });
+
+  // 타이머
+  let total = 25 * 60, left = total, isBreak = false, tick = null, endAt = 0, toastT;
+  const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const fmtMin = m => m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`;
+  function drawTimer() {
+    $('#clock').textContent = fmt(left);
+    $('#bar').style.width = `${(1 - left / total) * 100}%`;
+    document.title = tick ? `${fmt(left)} · 스쿨데이` : '스쿨데이';
+  }
+  function drawStats() {
+    const t = log[ymd(new Date())] || { min: 0, sess: 0 };
+    let week = 0;
+    for (let i = 0; i < 7; i++) week += (log[plus(-i)] || {}).min || 0;
+    $('#st-today').textContent = fmtMin(t.min); $('#st-sess').textContent = `${t.sess}회`; $('#st-week').textContent = fmtMin(week);
+  }
+  function toast(msg) {
+    const el = $('#toast'); el.textContent = msg; el.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 6000);
+  }
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, .25, .5].forEach(t => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(.2, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + t + .2);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .2);
+      });
+    } catch {}
+  }
+  function stop() { clearInterval(tick); tick = null; $('#t-start').textContent = '시작'; drawTimer(); }
+  function finish() {
+    if (!isBreak) {
+      const k = ymd(new Date()); const t = log[k] || { min: 0, sess: 0 };
+      t.min += Math.round(total / 60); t.sess += 1; log[k] = t; store.set('studylog', log); drawStats();
+    }
+    stop(); left = total; drawTimer(); beep();
+    toast(isBreak ? '휴식 끝! 다시 집중해 볼까요?' : '집중 세션 완료! 잠깐 쉬어 가요.');
+  }
+  $('#t-start').addEventListener('click', () => {
+    if (tick) { stop(); return; }
+    endAt = Date.now() + left * 1000;
+    tick = setInterval(() => { left = Math.max(0, Math.round((endAt - Date.now()) / 1000)); drawTimer(); if (!left) finish(); }, 250);
+    $('#t-start').textContent = '일시정지'; drawTimer();
+  });
+  $('#t-reset').addEventListener('click', () => { stop(); left = total; drawTimer(); });
+  $('#modes').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('#modes button').forEach(x => x.classList.toggle('on', x === b));
+    stop(); total = left = +b.dataset.min * 60; isBreak = !!b.dataset.break; drawTimer();
+  });
+
+  // 시간표
+  const PERIODS = 7, WEEK = ['월', '화', '수', '목', '금'];
+  const todayIdx = now.getDay() - 1;
+  function renderTT() {
+    let html = '<tr><th></th>' + WEEK.map((d, i) => `<th class="${i === todayIdx ? 'now' : ''}">${d}</th>`).join('') + '</tr>';
+    for (let p = 1; p <= PERIODS; p++) {
+      html += `<tr><th>${p}교시</th>` + WEEK.map((d, i) =>
+        `<td class="${i === todayIdx ? 'now' : ''}"><input id="tt-${i}-${p}" data-k="${i}-${p}" value="${esc(tt[i + '-' + p] || '')}" maxlength="8" aria-label="${d}요일 ${p}교시"></td>`).join('') + '</tr>';
+    }
+    $('#tt').innerHTML = html;
+  }
+  $('#tt').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; tt[k] = e.target.value; store.set('timetable', tt); });
+
+  // 오답 노트
+  let filter = '전체';
+  $('#note-subj').innerHTML = SUBJECTS.map(s => `<option>${s}</option>`).join('');
+  function renderNotes() {
+    const subs = ['전체', ...SUBJECTS.filter(s => notes.some(n => n.subj === s))];
+    if (!subs.includes(filter)) filter = '전체';
+    $('#note-filter').innerHTML = subs.map(s => `<button class="${s === filter ? 'on' : ''}" data-s="${s}">${s}</button>`).join('');
+    const list = notes.filter(n => filter === '전체' || n.subj === filter).sort((a, b) => a.done - b.done || b.id - a.id);
+    $('#note-list').innerHTML = list.length ? list.map(n => `
+      <li class="note ${n.done ? 'done' : ''}">
+        <div class="head"><span class="tag">${esc(n.subj)}</span><span class="sub grow">${n.date}${exTag(n)}</span>
+          <label class="check"><input type="checkbox" data-done="${n.id}" ${n.done ? 'checked' : ''}> 해결</label>
+          <button class="x" data-del="${n.id}" aria-label="오답 삭제">✕</button></div>
+        <div class="q">${esc(n.q)}</div>${n.a ? `<div class="a">${esc(n.a)}</div>` : ''}
+      </li>`).join('') : '<li class="empty">틀린 문제를 기록하면 같은 실수를 줄일 수 있어요.</li>';
+  }
+  $('#note-form').addEventListener('submit', e => {
+    e.preventDefault();
+    notes.push({ id: Date.now(), subj: $('#note-subj').value, q: $('#note-q').value.trim(), a: $('#note-a').value.trim(), date: ymd(new Date()).replace(/-/g, '.'), done: false });
+    store.set('notes', notes); $('#note-q').value = ''; $('#note-a').value = ''; renderNotes();
+  });
+  $('#note-filter').addEventListener('click', e => { if (e.target.dataset.s) { filter = e.target.dataset.s; renderNotes(); } });
+  $('#note-list').addEventListener('click', e => {
+    const del = e.target.dataset.del, done = e.target.dataset.done;
+    if (del) notes = notes.filter(n => String(n.id) !== del);
+    else if (done) { const n = notes.find(n => String(n.id) === done); n.done = e.target.checked; }
+    else return;
+    store.set('notes', notes); renderNotes();
+  });
+
+  // 한눈에
+  function renderOverview() {
+    const up = ddays.filter(d => dayDiff(d.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+    $('#ov-dday').innerHTML = up.length ? '<ul class="list">' + up.map(d => {
+      const n = dayDiff(d.date);
+      return `<li><span class="dday ${ddClass(n)}">${ddLabel(n)}</span><div class="grow">${esc(d.title)}${exTag(d)}</div></li>`;
+    }).join('') + '</ul>' : '<div class="empty">예정된 일정이 없어요</div>';
+    const t = log[ymd(new Date())] || { min: 0, sess: 0 };
+    $('#ov-study').textContent = fmtMin(t.min);
+    $('#ov-sessions').textContent = `완료한 집중 세션 ${t.sess}회`;
+    if (todayIdx < 0 || todayIdx > 4) $('#ov-tt').innerHTML = '<div class="empty">오늘은 주말이에요. 푹 쉬어요!</div>';
+    else {
+      const subj = [];
+      for (let p = 1; p <= PERIODS; p++) if (tt[todayIdx + '-' + p]) subj.push(`<span class="tag">${p}교시 ${esc(tt[todayIdx + '-' + p])}</span>`);
+      $('#ov-tt').innerHTML = subj.length ? `<div class="chips">${subj.join('')}</div>` : '<div class="empty">시간표 탭에서 과목을 입력해 주세요</div>';
+    }
+    $('#ov-notes').textContent = `${notes.filter(n => !n.done).length}개`;
+  }
+
+  renderDday(); drawTimer(); drawStats(); renderTT(); renderNotes();
+  const start = (location.hash || '').slice(1);
+  showTab(['home', 'dday', 'timer', 'tt', 'notes'].includes(start) ? start : 'home');
+})();
+</script>
+</body>
+</html>
